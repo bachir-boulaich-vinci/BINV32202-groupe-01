@@ -8,33 +8,42 @@ import { isUnauthorized } from "../utils/api.ts";
  * onUnauthorized doit être stable (useCallback) pour ne pas relancer le chargement.
  */
 export const useOffers = (token: string, onUnauthorized: () => void, period?: PeriodCode) => {
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Le résultat mémorise la requête (jeton + période) à laquelle il répond :
+  // tant qu'il ne correspond pas à la requête courante, le chargement est en cours.
+  const [result, setResult] = useState<{
+    key: string;
+    offers: Offer[];
+    error: string | null;
+  } | null>(null);
+  const requestKey = `${token}|${period ?? ""}`;
 
   useEffect(() => {
     const controller = new AbortController();
-    setIsLoading(true);
-    setError(null);
 
     getOffers(token, controller.signal, period)
       .then((data) => {
-        if (!controller.signal.aborted) setOffers(data);
+        if (!controller.signal.aborted) setResult({ key: requestKey, offers: data, error: null });
       })
       .catch((reason: unknown) => {
         if (controller.signal.aborted) return;
         if (isUnauthorized(reason)) {
           onUnauthorized();
         } else {
-          setError(reason instanceof Error ? reason.message : "Erreur inconnue");
+          setResult({
+            key: requestKey,
+            offers: [],
+            error: reason instanceof Error ? reason.message : "Erreur inconnue",
+          });
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false);
       });
 
     return () => controller.abort();
-  }, [token, onUnauthorized, period]);
+  }, [token, onUnauthorized, period, requestKey]);
 
-  return { offers, isLoading, error };
+  const current = result?.key === requestKey ? result : null;
+  return {
+    offers: current?.offers ?? [],
+    isLoading: current === null,
+    error: current?.error ?? null,
+  };
 };
