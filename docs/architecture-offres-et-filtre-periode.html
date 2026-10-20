@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Architecture Gesta et parcours des offres</title>
+    <style>
+      :root {
+        --ink: #172033;
+        --muted: #5d687c;
+        --line: #d7deeb;
+        --surface: #fff;
+        --soft: #f4f7fb;
+        --blue: #2258c7;
+        --blue-soft: #eaf0ff;
+        --green: #147d5a;
+        --orange: #9b5800;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #edf1f7;
+        line-height: 1.55;
+      }
+      header {
+        padding: 3.75rem max(1.5rem, calc((100% - 1120px) / 2));
+        color: white;
+        background: linear-gradient(135deg, #172c69, #2258c7);
+      }
+      header h1 { max-width: 850px; margin: 0; font-size: clamp(2rem, 5vw, 3.7rem); line-height: 1.1; }
+      header p { max-width: 800px; margin: 1rem 0 0; color: #dce6ff; font-size: 1.08rem; }
+      main { width: min(1120px, calc(100% - 3rem)); margin: 2rem auto 4rem; }
+      section {
+        margin-top: 2rem;
+        padding: 2rem;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgb(23 32 51 / 5%);
+      }
+      h2 { margin-top: 0; font-size: 1.65rem; line-height: 1.2; }
+      h3 { margin: .2rem 0 .45rem; line-height: 1.25; }
+      .muted { color: var(--muted); }
+      .architecture {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: .8rem;
+        margin-top: 1.5rem;
+      }
+      .layer {
+        position: relative;
+        padding: 1.1rem;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .layer:not(:last-child)::after {
+        position: absolute;
+        top: 42%;
+        right: -.95rem;
+        z-index: 1;
+        color: var(--blue);
+        content: "→";
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+      .layer p, .card p { margin: 0; color: var(--muted); font-size: .93rem; }
+      .layer strong { color: var(--blue); }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      .card { padding: 1.1rem; border: 1px solid var(--line); border-radius: 12px; }
+      .card ul { margin: .65rem 0 0; padding-left: 1.2rem; }
+      .card li + li { margin-top: .35rem; }
+      code {
+        padding: .1rem .3rem;
+        color: #153d9b;
+        background: var(--blue-soft);
+        border-radius: 4px;
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: .88em;
+      }
+      pre {
+        overflow-x: auto;
+        margin: 1rem 0 0;
+        padding: 1rem;
+        color: #eaf0ff;
+        background: #182238;
+        border-radius: 10px;
+        font-size: .88rem;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: .65rem;
+        align-items: stretch;
+        margin-top: 1.5rem;
+      }
+      .step {
+        position: relative;
+        padding: .9rem;
+        background: var(--soft);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      .step:not(:last-child)::after {
+        position: absolute;
+        top: 42%;
+        right: -.75rem;
+        z-index: 1;
+        color: var(--blue);
+        content: "→";
+        font-weight: 700;
+      }
+      .number {
+        display: inline-grid;
+        width: 1.5rem;
+        height: 1.5rem;
+        place-items: center;
+        color: white;
+        background: var(--blue);
+        border-radius: 50%;
+        font-size: .8rem;
+        font-weight: 700;
+      }
+      .step h3 { font-size: .98rem; }
+      .step p { margin: 0; color: var(--muted); font-size: .86rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { padding: .7rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+      th { color: var(--muted); background: var(--soft); font-size: .82rem; text-transform: uppercase; }
+      tr:last-child td { border-bottom: 0; }
+      .tag {
+        display: inline-block;
+        padding: .2rem .5rem;
+        color: var(--green);
+        background: #e4f6ef;
+        border-radius: 999px;
+        font-size: .82rem;
+        font-weight: 700;
+      }
+      .notice {
+        padding: 1rem 1.2rem;
+        border-left: 4px solid var(--orange);
+        color: #714000;
+        background: #fff4df;
+      }
+      footer {
+        width: min(1120px, calc(100% - 3rem));
+        margin: -2rem auto 3rem;
+        color: var(--muted);
+        font-size: .9rem;
+      }
+      @media (max-width: 950px) {
+        .architecture, .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .layer:nth-child(2)::after, .step:nth-child(2)::after,
+        .step:nth-child(4)::after { display: none; }
+      }
+      @media (max-width: 650px) {
+        header { padding: 3rem 1.5rem; }
+        main, footer { width: min(100% - 1.5rem, 1120px); }
+        section { padding: 1.25rem; }
+        .architecture, .flow, .grid { grid-template-columns: 1fr; }
+        .layer::after, .step::after { display: none !important; }
+        th, td { padding: .5rem; font-size: .9rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Architecture Gesta et parcours de visualisation des offres</h1>
+      <p>
+        Une vue d'ensemble de l'application et du trajet complet d'une offre,
+        du composant React jusqu'à SQLite puis de nouveau vers l'interface.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Architecture générale</h2>
+        <p class="muted">
+          Le projet est un monorepo npm composé de deux workspaces TypeScript.
+          Le frontend React/Vite communique avec une API Express ; l'API porte
+          les règles métier et utilise une base SQLite locale.
+        </p>
+        <div class="architecture">
+          <article class="layer">
+            <strong>Frontend</strong>
+            <h3>React + Vite</h3>
+            <p>Pages, composants, hooks, services HTTP, modèles et type guards.</p>
+          </article>
+          <article class="layer">
+            <strong>API</strong>
+            <h3>Express</h3>
+            <p>Routes, authentification, autorisation, validation et réponses JSON.</p>
+          </article>
+          <article class="layer">
+            <strong>Métier</strong>
+            <h3>Services + repositories</h3>
+            <p>Visibilité selon le profil, requêtes SQL et mapping des données.</p>
+          </article>
+          <article class="layer">
+            <strong>Données</strong>
+            <h3>SQLite</h3>
+            <p>Offres, entreprises, années académiques, périodes et utilisateurs.</p>
+          </article>
+        </div>
+        <p class="muted">
+          Le backend suit le flux <code>controller → service → repository → SQLite</code>.
+          Les mappers séparent les lignes SQL, les objets métier et les DTO publics.
+          Le frontend suit le flux <code>page → hook → service → API</code> et
+          délègue le rendu aux composants réutilisables.
+        </p>
+      </section>
+
+      <section>
+        <h2>Parcours d'affichage des offres</h2>
+        <div class="flow">
+          <article class="step"><span class="number">1</span><h3>App</h3><p>Route <code>/offres</code> et session.</p></article>
+          <article class="step"><span class="number">2</span><h3>OffersPage</h3><p>Demande le chargement avec le token.</p></article>
+          <article class="step"><span class="number">3</span><h3>useOffers</h3><p>Gère états, annulation et 401.</p></article>
+          <article class="step"><span class="number">4</span><h3>fetch</h3><p>Envoie <code>GET /api/offers</code>.</p></article>
+          <article class="step"><span class="number">5</span><h3>Backend</h3><p>Authentifie, autorise et filtre.</p></article>
+          <article class="step"><span class="number">6</span><h3>OfferTable</h3><p>Affiche le DTO validé.</p></article>
+        </div>
+
+        <h3>1. Départ dans le composant React</h3>
+        <p class="muted">
+          <code>App.tsx</code> appelle <code>useAuth</code> une seule fois. Une fois
+          l'utilisateur connecté, il rend la route <code>/offres</code> et transmet
+          le token ainsi que le callback de déconnexion à <code>OffersPage</code>.
+          La permission côté interface masque la route pour les profils non concernés,
+          mais elle ne remplace jamais le contrôle backend.
+        </p>
+        <pre><code>const { offers, isLoading, error } = useOffers(token, onUnauthorized);
+
+if (error) return &lt;ErrorState message={error} /&gt;;
+if (isLoading) return &lt;LoadingState /&gt;;
+if (offers.length === 0) return &lt;EmptyState message="Aucune offre à afficher." /&gt;;
+return &lt;OfferTable offers={offers} /&gt;;</code></pre>
+
+        <h3>2. Hook et service HTTP</h3>
+        <p class="muted">
+          <code>useOffers.ts</code> lance l'appel dans un <code>useEffect</code>.
+          Un <code>AbortController</code> évite de mettre à jour un composant après
+          son démontage. <code>offers.service.ts</code> envoie le jeton brut dans
+          <code>Authorization</code>, sans préfixe <code>Bearer</code>.
+        </p>
+        <pre><code>fetch("/api/offers", {
+  headers: { Authorization: token },
+  signal,
+});</code></pre>
+
+        <h3>3. Proxy puis pipeline Express</h3>
+        <p class="muted">
+          En développement, Vite transmet <code>/api/offers</code> au backend sur
+          le port 3000 en retirant le préfixe <code>/api</code>. Dans
+          <code>app.ts</code>, la route est protégée par <code>authenticate</code>.
+          Puis <code>authorize(canListOffers)</code> vérifie le droit d'accès.
+        </p>
+        <pre><code>app.use("/offers", authenticate, createOffersRouter(offersService));
+
+router.get("/", authorize(canListOffers), (req, res) =&gt; {
+  res.json(offersService.listOffers(getCurrentUser(req)).map(toOfferDto));
+});</code></pre>
+
+        <h3>4. Service métier et base de données</h3>
+        <p class="muted">
+          Le service choisit le filtre selon le profil. L'administrateur voit tout,
+          l'étudiant voit les offres publiées et un contact déposant voit ses propres
+          offres. Le repository exécute ensuite une requête paramétrée avec des
+          jointures vers l'entreprise, l'année académique et la période.
+        </p>
+        <table>
+          <thead><tr><th>Profil</th><th>Filtre métier</th><th>Réponse</th></tr></thead>
+          <tbody>
+            <tr><td>Administrateur</td><td><code>{}</code></td><td>Toutes les offres.</td></tr>
+            <tr><td>Étudiant</td><td><code>status = PUBLISHED</code></td><td>Offres publiées.</td></tr>
+            <tr><td>Contact déposant</td><td><code>depositor_contact_id = user.id</code></td><td>Offres déposées par ce contact.</td></tr>
+            <tr><td>Contact sans rôle déposant</td><td>Refus métier</td><td><span class="tag">403 FORBIDDEN</span></td></tr>
+          </tbody>
+        </table>
+        <pre><code>SELECT o.id, o.title, o.description, o.status,
+       c.short_name AS company_short_name,
+       ay.label AS academic_year_label, p.code AS period_code
+FROM offers o
+JOIN companies c ON c.id = o.company_id
+JOIN academic_years ay ON ay.id = o.academic_year_id
+JOIN periods p ON p.id = o.period_id
+WHERE (@status IS NULL OR o.status = @status)
+  AND (@depositorContactId IS NULL OR o.depositor_contact_id = @depositorContactId)
+ORDER BY ay.start_date DESC, o.created_at DESC;</code></pre>
+
+        <h3>5. Retour, mapping et affichage</h3>
+        <p class="muted">
+          Les lignes SQL sont converties par <code>toOffer</code>, puis réduites au
+          contrat public par <code>toOfferDto</code>. Le frontend vérifie le statut
+          HTTP et la structure avec <code>readJson</code> et <code>isOfferList</code>.
+          Enfin <code>OfferTable</code> traduit les codes de période et de statut
+          avec <code>utils/labels.ts</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Ajout d'un filtre par période</h2>
+        <p class="muted">
+          Le modèle expose déjà <code>period</code> et le repository joint déjà
+          la table <code>periods</code>. Le filtre doit donc traverser toute la
+          chaîne, de l'interface jusqu'au paramètre SQL, sans déplacer la règle
+          d'accès du backend vers le frontend.
+        </p>
+        <table>
+          <thead><tr><th>Fichier</th><th>Évolution attendue</th><th>Couche</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>frontend/src/pages/OffersPage.tsx</code></td>
+              <td>Ajouter le contrôle de sélection de période et conserver sa valeur dans l'état de la page.</td>
+              <td>Interface</td>
+            </tr>
+            <tr>
+              <td><code>frontend/src/components/OfferTable.tsx</code></td>
+              <td>Pas nécessaire pour filtrer ; à modifier seulement si le contrôle est intégré autour du tableau plutôt que dans la page.</td>
+              <td>Affichage</td>
+            </tr>
+            <tr>
+              <td><code>frontend/src/hooks/useOffers.ts</code></td>
+              <td>Accepter la période sélectionnée comme dépendance et la transmettre au service, avec rechargement lors d'un changement.</td>
+              <td>État</td>
+            </tr>
+            <tr>
+              <td><code>frontend/src/services/offers.service.ts</code></td>
+              <td>Construire <code>/api/offers?period=P1</code> (ou sans paramètre si « toutes ») et conserver le signal d'annulation.</td>
+              <td>HTTP</td>
+            </tr>
+            <tr>
+              <td><code>frontend/src/models/offer.ts</code></td>
+              <td>Réutiliser le type <code>PeriodCode</code> et, si nécessaire, exposer un type de filtre partagé.</td>
+              <td>Modèle</td>
+            </tr>
+            <tr>
+              <td><code>frontend/src/utils/labels.ts</code></td>
+              <td>Ajouter les libellés détaillés des options si l'interface doit afficher « P1 », « P2 » et « Autre » différemment.</td>
+              <td>Libellés</td>
+            </tr>
+            <tr>
+              <td><code>backend/src/controllers/offers.controller.ts</code></td>
+              <td>Lire et valider le paramètre <code>period</code> une seule fois ; répondre <code>400 INVALID_QUERY</code> si sa valeur est inconnue ou répétée.</td>
+              <td>HTTP</td>
+            </tr>
+            <tr>
+              <td><code>backend/src/services/offers.service.ts</code></td>
+              <td>Ajouter <code>period</code> au filtre transmis au repository, en le combinant avec la visibilité du profil.</td>
+              <td>Métier</td>
+            </tr>
+            <tr>
+              <td><code>backend/src/repositories/offers.repository.ts</code></td>
+              <td>Ajouter <code>periodCode</code> aux paramètres et la condition SQL <code>p.code = @periodCode</code>.</td>
+              <td>SQL</td>
+            </tr>
+            <tr>
+              <td><code>backend/src/models/offer.ts</code></td>
+              <td>Réutiliser <code>PeriodCode</code> pour typer le filtre repository et le paramètre validé.</td>
+              <td>Modèle</td>
+            </tr>
+            <tr>
+              <td><code>backend/tests/offers.test.ts</code></td>
+              <td>Tester chaque période, « toutes », combinaison avec chaque profil, période inconnue, paramètre répété et résultat vide.</td>
+              <td>Tests API</td>
+            </tr>
+            <tr>
+              <td><code>frontend/tests/OffersPage.test.tsx</code></td>
+              <td>Vérifier l'envoi du paramètre, le rechargement au changement et l'affichage des résultats filtrés.</td>
+              <td>Tests UI</td>
+            </tr>
+            <tr>
+              <td><code>backend/API.md</code> et <code>backend/http/offers.http</code></td>
+              <td>Documenter le paramètre, ses valeurs autorisées, les erreurs 400 et ajouter des exemples REST Client.</td>
+              <td>Documentation</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="notice">
+          Aucun nouveau fichier de migration ne paraît nécessaire pour ce filtre :
+          <code>offers.period_id</code> et <code>periods.code</code> existent déjà.
+          Une migration ne serait requise que si le modèle métier devait accepter
+          de nouvelles périodes ou modifier la structure de ces tables.
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Document généré à partir de l'implémentation actuelle de Gesta et de
+      <code>docs/architecture.md</code>.
+    </footer>
+  </body>
+</html>
