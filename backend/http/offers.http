@@ -34,6 +34,10 @@ Authorization: {{admin.response.body.token}}
 GET http://localhost:3000/offers
 Authorization: {{student.response.body.token}}
 
+### Offres vues par l'étudiant en P2
+GET http://localhost:3000/offers?period=P2
+Authorization: {{student.response.body.token}}
+
 ### Offres vues par le déposant
 GET http://localhost:3000/offers
 Authorization: {{depositor.response.body.token}}

@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Workflow de visualisation des offres - Gesta</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172033;
+        --muted: #5c667a;
+        --line: #d9dfeb;
+        --surface: #ffffff;
+        --surface-alt: #f4f7fb;
+        --blue: #2357c6;
+        --blue-soft: #eaf0ff;
+        --green: #147d5a;
+        --orange: #a45b00;
+        --red: #b42318;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #edf1f7;
+        line-height: 1.55;
+      }
+
+      header {
+        padding: 4rem max(1.5rem, calc((100% - 1120px) / 2));
+        color: white;
+        background: linear-gradient(135deg, #172c69, #2357c6);
+      }
+
+      header p {
+        max-width: 760px;
+        margin-bottom: 0;
+        color: #dce6ff;
+        font-size: 1.1rem;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+      }
+
+      h1 {
+        max-width: 820px;
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 3.8rem);
+      }
+
+      h2 {
+        margin-top: 0;
+        font-size: 1.65rem;
+      }
+
+      h3 {
+        margin-bottom: 0.45rem;
+        font-size: 1.05rem;
+      }
+
+      main {
+        width: min(1120px, calc(100% - 3rem));
+        margin: 2rem auto 4rem;
+      }
+
+      section {
+        margin-top: 2rem;
+        padding: 2rem;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgb(23 32 51 / 5%);
+      }
+
+      .lead {
+        margin-top: 0;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.7rem;
+        align-items: stretch;
+        margin-top: 1.5rem;
+      }
+
+      .step {
+        position: relative;
+        padding: 1rem;
+        background: var(--surface-alt);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+
+      .step:not(:last-child)::after {
+        position: absolute;
+        top: 50%;
+        right: -0.95rem;
+        z-index: 1;
+        color: var(--blue);
+        content: "→";
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+
+      .step-number {
+        display: inline-grid;
+        width: 1.65rem;
+        height: 1.65rem;
+        place-items: center;
+        margin-bottom: 0.5rem;
+        color: white;
+        background: var(--blue);
+        border-radius: 50%;
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+
+      .step p,
+      .card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      code {
+        padding: 0.1rem 0.3rem;
+        color: #153d9b;
+        background: var(--blue-soft);
+        border-radius: 4px;
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: 0.88em;
+      }
+
+      .direction {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: 1rem;
+        align-items: center;
+        margin: 1.5rem 0;
+        padding: 1rem;
+        color: var(--muted);
+        text-align: center;
+        background: var(--surface-alt);
+        border-radius: 10px;
+      }
+
+      .direction strong {
+        color: var(--ink);
+      }
+
+      .arrow {
+        color: var(--blue);
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .card {
+        padding: 1.2rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+
+      .card ul {
+        margin: 0.75rem 0 0;
+        padding-left: 1.2rem;
+      }
+
+      .card li + li {
+        margin-top: 0.35rem;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        background: var(--surface-alt);
+        font-size: 0.88rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+
+      .ok {
+        color: var(--green);
+        background: #e4f6ef;
+      }
+
+      .warn {
+        color: var(--orange);
+        background: #fff1d9;
+      }
+
+      .error {
+        color: var(--red);
+        background: #fde8e7;
+      }
+
+      pre {
+        overflow-x: auto;
+        margin: 1rem 0 0;
+        padding: 1rem;
+        color: #eaf0ff;
+        background: #182238;
+        border-radius: 10px;
+        font-size: 0.9rem;
+      }
+
+      footer {
+        width: min(1120px, calc(100% - 3rem));
+        margin: -2rem auto 3rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 850px) {
+        .flow,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .step:not(:last-child)::after {
+          top: auto;
+          right: auto;
+          bottom: -1.15rem;
+          left: 50%;
+          content: "↓";
+          transform: translateX(-50%);
+        }
+      }
+
+      @media (max-width: 600px) {
+        header {
+          padding: 3rem 1.5rem;
+        }
+
+        main,
+        footer {
+          width: min(100% - 1.5rem, 1120px);
+        }
+
+        section {
+          padding: 1.25rem;
+        }
+
+        .direction {
+          grid-template-columns: 1fr;
+        }
+
+        .arrow {
+          transform: rotate(90deg);
+        }
+
+        th,
+        td {
+          padding: 0.55rem;
+          font-size: 0.9rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Visualisation d'une offre de stage</h1>
+      <p>
+        Parcours complet d'une liste d'offres : du rendu React au chargement HTTP,
+        puis de l'authentification backend jusqu'à SQLite et au retour des données
+        affichées dans le tableau.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Vue d'ensemble du workflow</h2>
+        <p class="lead">
+          La page ne décide pas quelles offres sont autorisées. Elle demande les
+          offres avec le jeton de session ; le backend relit l'utilisateur en base,
+          applique la règle de visibilité, puis renvoie uniquement les DTO exposables.
+        </p>
+
+        <div class="flow">
+          <article class="step">
+            <span class="step-number">1</span>
+            <h3>Page React</h3>
+            <p><code>OffersPage</code> appelle <code>useOffers</code>.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">2</span>
+            <h3>Requête HTTP</h3>
+            <p><code>GET /api/offers</code> porte le jeton brut.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">3</span>
+            <h3>Contrôle API</h3>
+            <p>Authentification puis autorisation par profil.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">4</span>
+            <h3>Lecture SQLite</h3>
+            <p>Filtre métier, jointures, tri et mapping.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">5</span>
+            <h3>Rendu</h3>
+            <p>Validation JSON, états UI et <code>OfferTable</code>.</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>1. Déclenchement côté frontend</h2>
+        <div class="grid">
+          <article class="card">
+            <h3><code>App.tsx</code> et routage</h3>
+            <p>
+              Après connexion, <code>App</code> connaît l'utilisateur et son jeton.
+              La route <code>/offres</code> est rendue seulement si
+              <code>canListOffers(user)</code> est vrai pour l'interface.
+            </p>
+          </article>
+          <article class="card">
+            <h3><code>OffersPage.tsx</code></h3>
+            <p>
+              La page transmet <code>token</code> et <code>onUnauthorized</code> à
+              <code>useOffers</code>, puis choisit entre chargement, erreur, état vide
+              et tableau.
+            </p>
+          </article>
+        </div>
+        <pre><code>const { offers, isLoading, error } = useOffers(token, onUnauthorized);
+
+if (error) return &lt;ErrorState message={error} /&gt;;
+if (isLoading) return &lt;LoadingState /&gt;;
+if (offers.length === 0) return &lt;EmptyState ... /&gt;;
+return &lt;OfferTable offers={offers} /&gt;;</code></pre>
+      </section>
+
+      <section>
+        <h2>2. Appel HTTP et proxy de développement</h2>
+        <div class="direction">
+          <strong>Frontend<br /><code>/api/offers</code></strong>
+          <span class="arrow">→</span>
+          <span>Proxy Vite retire <code>/api</code></span>
+          <span class="arrow">→</span>
+          <strong>Backend<br /><code>GET /offers</code></strong>
+        </div>
+        <p>
+          <code>getOffers</code> utilise <code>fetch</code> avec le signal d'un
+          <code>AbortController</code>. L'en-tête
+          <code>Authorization</code> contient le JWT sans préfixe
+          <code>Bearer</code>. Le signal annule la requête si le composant est
+          démonté ou si ses dépendances changent.
+        </p>
+        <pre><code>fetch("/api/offers", {
+  headers: { Authorization: token },
+  signal,
+});</code></pre>
+      </section>
+
+      <section>
+        <h2>3. Authentification et autorisation backend</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Authentification</h3>
+            <p>
+              Le middleware <code>authenticate</code> lit l'en-tête, vérifie le
+              jeton et recharge l'utilisateur depuis la base. Les rôles et les
+              entreprises ne sont donc pas pris dans le contenu contrôlable du
+              frontend.
+            </p>
+            <p><span class="badge error">401 UNAUTHENTICATED</span> si la session est absente, invalide, expirée ou désactivée.</p>
+          </article>
+          <article class="card">
+            <h3>Autorisation</h3>
+            <p>
+              La route applique <code>authorize(canListOffers)</code>. Les règles
+              nommées se trouvent dans <code>services/permissions.ts</code>.
+            </p>
+            <p><span class="badge error">403 FORBIDDEN</span> pour un contact qui n'a pas le rôle <code>DEPOSITOR</code>.</p>
+          </article>
+        </div>
+        <pre><code>app.use("/offers", authenticate, createOffersRouter(offersService));
+
+router.get("/", authorize(canListOffers), (req, res) =&gt; {
+  res.json(offersService.listOffers(getCurrentUser(req)).map(toOfferDto));
+});</code></pre>
+      </section>
+
+      <section>
+        <h2>4. Sélection des offres et lecture SQLite</h2>
+        <p>
+          Le service transforme le profil en filtre de repository avant toute
+          lecture. Le repository utilise une requête paramétrée et joint
+          <code>companies</code>, <code>academic_years</code> et
+          <code>periods</code>.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Profil</th>
+              <th>Filtre appliqué</th>
+              <th>Résultat</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Administrateur</td>
+              <td><code>{}</code></td>
+              <td>Toutes les offres, tous statuts confondus.</td>
+            </tr>
+            <tr>
+              <td>Étudiant</td>
+              <td><code>status = PUBLISHED</code></td>
+              <td>Uniquement les offres publiées.</td>
+            </tr>
+            <tr>
+              <td>Contact déposant</td>
+              <td><code>depositor_contact_id = user.id</code></td>
+              <td>Ses offres, quel que soit leur statut.</td>
+            </tr>
+            <tr>
+              <td>Contact sans rôle déposant</td>
+              <td>Aucune requête métier</td>
+              <td><span class="badge error">403</span> accès refusé.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Le tri SQL est déterministe : année académique la plus récente d'abord,
+          puis offres les plus récemment créées. Les paramètres absents sont
+          transmis comme <code>NULL</code>, ce qui désactive le filtre associé.
+        </p>
+        <pre><code>SELECT o.id, o.title, o.description, o.status,
+       c.short_name AS company_short_name,
+       ay.label AS academic_year_label, p.code AS period_code
+FROM offers o
+JOIN companies c ON c.id = o.company_id
+JOIN academic_years ay ON ay.id = o.academic_year_id
+JOIN periods p ON p.id = o.period_id
+WHERE (@status IS NULL OR o.status = @status)
+  AND (@depositorContactId IS NULL OR o.depositor_contact_id = @depositorContactId)
+ORDER BY ay.start_date DESC, o.created_at DESC;</code></pre>
+      </section>
+
+      <section>
+        <h2>5. Mapping et retour de la réponse</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>DBO → objet métier</h3>
+            <p>
+              <code>toOffer</code> convertit les noms SQL en propriétés TypeScript
+              et regroupe les informations d'entreprise.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Objet métier → DTO</h3>
+            <p>
+              <code>toOfferDto</code> ne renvoie que les champs nécessaires à la
+              liste : identifiant, titre, entreprise, année, période et statut.
+              La description et les identifiants internes restent côté serveur.
+            </p>
+          </article>
+        </div>
+        <div class="direction">
+          <strong>Tableau SQL<br /><code>OfferDbo</code></strong>
+          <span class="arrow">→</span>
+          <strong>Objet métier<br /><code>Offer</code></strong>
+          <span class="arrow">→</span>
+          <strong>JSON API<br /><code>OfferDto[]</code></strong>
+        </div>
+        <p>
+          Sur le frontend, <code>readJson</code> vérifie d'abord le statut HTTP puis
+          <code>isOfferList</code> valide la forme du JSON. Une réponse inattendue
+          produit une erreur explicite au lieu d'être utilisée comme si elle était
+          valide.
+        </p>
+      </section>
+
+      <section>
+        <h2>6. Affichage final</h2>
+        <p>
+          Le hook stocke la liste dans son état. <code>OffersPage</code> la transmet
+          à <code>OfferTable</code>, qui affiche chaque offre dans une ligne.
+          Les codes techniques sont traduits en français par les helpers de
+          <code>utils/labels.ts</code> : par exemple <code>P2</code> devient
+          « Février à mai » et <code>PUBLISHED</code> devient « Publiée ».
+        </p>
+        <pre><code>&lt;OfferTable offers={offers} /&gt;
+
+&lt;td&gt;{offer.title}&lt;/td&gt;
+&lt;td&gt;{offer.companyShortName}&lt;/td&gt;
+&lt;td&gt;{offer.academicYear}&lt;/td&gt;
+&lt;td&gt;{PERIOD_LABELS[offer.period]}&lt;/td&gt;
+&lt;td&gt;{OFFER_STATUS_LABELS[offer.status]}&lt;/td&gt;</code></pre>
+      </section>
+
+      <section>
+        <h2>États et erreurs traversants</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Situation</th>
+              <th>Backend</th>
+              <th>Frontend</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Chargement en cours</td>
+              <td>Requête en traitement</td>
+              <td><span class="badge warn">LoadingState</span></td>
+            </tr>
+            <tr>
+              <td>Session invalide</td>
+              <td><code>401 UNAUTHENTICATED</code></td>
+              <td>Appel de <code>onUnauthorized</code>, retour à la connexion.</td>
+            </tr>
+            <tr>
+              <td>Droit insuffisant</td>
+              <td><code>403 FORBIDDEN</code></td>
+              <td>Erreur affichée si la requête est tout de même tentée.</td>
+            </tr>
+            <tr>
+              <td>Liste vide</td>
+              <td><code>200 []</code></td>
+              <td><span class="badge ok">EmptyState</span> « Aucune offre à afficher. »</td>
+            </tr>
+            <tr>
+              <td>Erreur inattendue</td>
+              <td><code>500 INTERNAL_ERROR</code> et journalisation serveur</td>
+              <td><span class="badge error">ErrorState</span> avec le message de chargement.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <footer>
+      Documentation basée sur l'implémentation actuelle de Gesta :
+      <code>frontend/src/pages/OffersPage.tsx</code>,
+      <code>frontend/src/hooks/useOffers.ts</code>,
+      <code>backend/src/controllers/offers.controller.ts</code>,
+      <code>backend/src/services/offers.service.ts</code> et
+      <code>backend/src/repositories/offers.repository.ts</code>.
+    </footer>
+  </body>
+</html>
