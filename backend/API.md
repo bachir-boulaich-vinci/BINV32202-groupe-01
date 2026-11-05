@@ -32,6 +32,7 @@ Toute erreur a la même forme :
 | 401 | `UNAUTHENTICATED` | Session absente, expirée ou invalide ; compte non autorisé à se connecter |
 | 403 | `FORBIDDEN` | Utilisateur connecté, mais sans droit sur la ressource |
 | 404 | `NOT_FOUND` | Route inconnue |
+| 409 | `APPLICATION_EXISTS` / `APPLICATION_PROCESSED` | Candidature déjà existante ou traitée |
 | 500 | `INTERNAL_ERROR` | Erreur inattendue du serveur |
 
 ## GET /health
@@ -171,3 +172,44 @@ récente à la plus ancienne, puis de la plus récente à la plus ancienne.
 - `401` `UNAUTHENTICATED` : session absente ou invalide.
 - `403` `FORBIDDEN` : contact seulement promoteur ou signataire.
 - `400` `INVALID_QUERY` : `period` est répété ou ne vaut pas `P1`, `P2` ou `OTHER`.
+
+## GET /applications
+
+Liste les candidatures de l'étudiant connecté. Le paramètre facultatif `period`
+filtre par période (`P1`, `P2` ou `OTHER`).
+
+- `200` : tableau contenant `id`, `offerId`, `offerTitle`, `companyShortName`,
+  `academicYear`, `period`, `message`, `status` et `appliedAt`.
+- `403` `FORBIDDEN` : l'utilisateur connecté n'est pas étudiant.
+- `400` `INVALID_QUERY` : période invalide ou répétée.
+
+`status` vaut `IN_PROGRESS`, `SELECTED`, `REJECTED` ou `WITHDRAWN`.
+
+## POST /applications
+
+Crée une candidature pour l'étudiant connecté.
+
+```json
+{ "offerId": 1, "message": "Message facultatif" }
+```
+
+Le message est facultatif et vide est enregistré comme `null`. La candidature
+est créée uniquement si l'offre est encore `PUBLISHED` au moment de la
+transaction.
+
+- `201` : candidature créée.
+- `400` `INVALID_BODY` ou `OFFER_NOT_PUBLISHED` : données invalides ou offre non publiée.
+- `404` `OFFER_NOT_FOUND` : offre inexistante.
+- `409` `APPLICATION_EXISTS` : candidature `IN_PROGRESS` déjà existante.
+- `403` `FORBIDDEN` : l'utilisateur connecté n'est pas étudiant.
+
+## DELETE /applications/:id
+
+Retire une candidature `IN_PROGRESS` de l'étudiant connecté. Son statut devient
+`WITHDRAWN`.
+
+- `200` : candidature mise à jour.
+- `400` `INVALID_QUERY` : identifiant invalide.
+- `404` `APPLICATION_NOT_FOUND` : candidature inexistante ou appartenant à un autre étudiant.
+- `409` `APPLICATION_PROCESSED` : candidature déjà traitée ou retirée.
+- `403` `FORBIDDEN` : l'utilisateur connecté n'est pas étudiant.
