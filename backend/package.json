@@ -9,6 +9,7 @@
     "start": "node dist/main.js",
     "db:init": "tsx src/db/scripts/init.ts",
     "db:reset": "tsx src/db/scripts/reset.ts",
+    "check:env": "node scripts/checkEnv.js",
     "lint": "oxlint --deny-warnings",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
