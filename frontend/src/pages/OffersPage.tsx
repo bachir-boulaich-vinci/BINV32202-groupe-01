@@ -1,12 +1,14 @@
-import { useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import EmptyState from "../components/EmptyState.tsx";
 import ErrorState from "../components/ErrorState.tsx";
 import LoadingState from "../components/LoadingState.tsx";
 import OfferTable from "../components/OfferTable.tsx";
+import PeriodFilter from "../components/PeriodFilter.tsx";
 import { useOffers } from "../hooks/useOffers.ts";
-import { PERIOD_CODES, type PeriodCode } from "../models/offer.ts";
+import { useApplications } from "../hooks/useApplications.ts";
+import { createApplication } from "../services/applications.service.ts";
+import type { PeriodCode } from "../models/offer.ts";
 import type { User } from "../models/user.ts";
-import { PERIOD_LABELS } from "../utils/labels.ts";
 
 interface OffersPageProps {
   user: User;
@@ -23,9 +25,18 @@ const DESCRIPTIONS = {
 const OffersPage = ({ user, token, onUnauthorized }: OffersPageProps) => {
   const [period, setPeriod] = useState<PeriodCode | "">("");
   const { offers, isLoading, error } = useOffers(token, onUnauthorized, period || undefined);
+  const [applicationRefresh, setApplicationRefresh] = useState(0);
+  const applications = useApplications(
+    token,
+    onUnauthorized,
+    undefined,
+    user.kind === "STUDENT",
+    applicationRefresh,
+  );
 
-  const handlePeriodChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setPeriod(event.target.value as PeriodCode | "");
+  const apply = async (offerId: number, message: string) => {
+    await createApplication(token, offerId, message);
+    setApplicationRefresh((value) => value + 1);
   };
 
   const renderContent = () => {
@@ -37,7 +48,11 @@ const OffersPage = ({ user, token, onUnauthorized }: OffersPageProps) => {
         <p className="result-count">
           {offers.length} offre{offers.length > 1 ? "s" : ""}
         </p>
-        <OfferTable offers={offers} />
+        <OfferTable
+          offers={offers}
+          studentApplications={applications.applications}
+          onApply={user.kind === "STUDENT" ? apply : undefined}
+        />
       </>
     );
   };
@@ -46,17 +61,7 @@ const OffersPage = ({ user, token, onUnauthorized }: OffersPageProps) => {
     <section>
       <h1>Offres de stage</h1>
       <p>{DESCRIPTIONS[user.kind]}</p>
-      <label className="search-field">
-        <span>Période</span>
-        <select value={period} onChange={handlePeriodChange}>
-          <option value="">Toutes les périodes</option>
-          {PERIOD_CODES.map((code) => (
-            <option key={code} value={code}>
-              {PERIOD_LABELS[code]}
-            </option>
-          ))}
-        </select>
-      </label>
+      <PeriodFilter value={period} onChange={setPeriod} />
       {renderContent()}
     </section>
   );
