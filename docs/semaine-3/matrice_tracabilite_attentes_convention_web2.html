@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrice de Traçabilité - Projet BINV2150-A</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #f8fafc; }
+        h1 { color: #0f172a; text-align: center; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 16px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #0f172a; color: #f8fafc; font-weight: 600; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f1f5f9; }
+        .source { font-size: 0.85em; color: #64748b; display: block; margin-top: 4px; }
+        .ecart { color: #dc2626; font-weight: 600; }
+        .ajout { color: #16a34a; font-weight: 600; }
+        .correspondance-forte { color: #0284c7; font-weight: 600; }
+        .correspondance-faible { color: #ea580c; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <h1>Matrice de Traçabilité - Conformité Web 2</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Attente ou convention de Web 2 (source)</th>
+                <th>Guide examiné (fichier et passage)</th>
+                <th>Correspondance</th>
+                <th>Écart ou ajout proposé</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1. Organisation du projet & Structure</strong><br><span class="source">[seance-01.pdf, page 21], [seance-09.pdf, page 3-19], [seance-10.pdf, page 2-15]</span></td>
+                <td><code>docs/architecture.md</code> (Architecture générale)<br><code>frontend/tsconfig.app.json</code> (Configuration globale)</td>
+                <td><span class="correspondance-faible">Partielle</span>. L'architecture backend est documentée, mais les règles de répertoires frontend (assets vs public, models) ne figurent pas dans les guides.</td>
+                <td><span class="ajout">Ajout proposé :</span> Rédiger un document <code>docs/architecture-frontend.md</code> détaillant l'arborescence imposée et l'usage strict de <code>public/</code> vs <code>src/assets/</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>2. Conventions Backend & API REST</strong><br><span class="source">[seance-02.pdf, page 3-18], [seance-03.pdf], [seance-04.pdf]</span></td>
+                <td><code>backend/API.md</code> (Contrat API)<br><code>.github/pull_request_template.md</code> (Vérifications PR)</td>
+                <td><span class="correspondance-forte">Forte</span>. Le document API couvre les requêtes. Le template PR force la validation des erreurs 400, 401, 403, 404.</td>
+                <td><span class="ecart">Écart :</span> Le PR template ignore les codes de succès (201, 204) et le 409 Conflict. <span class="ajout">Ajout :</span> Ajouter ces codes dans la checklist de la Pull Request.</td>
+            </tr>
+            <tr>
+                <td><strong>3. Documentation d'API</strong><br><span class="source">[seance-02.pdf, page 11-18]</span></td>
+                <td><code>backend/API.md</code> (Contrat API)</td>
+                <td><span class="correspondance-forte">Complète</span>. L'utilisation de Markdown est explicitement validée comme l'une des 3 approches.</td>
+                <td><span class="ajout">Ajout proposé :</span> Configurer une règle de linter JSDoc pour garantir que le code source soit également commenté, renforçant le fichier Markdown.</td>
+            </tr>
+            <tr>
+                <td><strong>4. Sécurité, JWT et Mots de passe</strong><br><span class="source">[seance-03.pdf, page 8-15], [seance-04.pdf, page 2-14]</span></td>
+                <td><code>docs/workflow-visualisation-offre.html</code> (Autorisations)<br><code>backend/.oxlintrc.json</code> (Linter)</td>
+                <td><span class="correspondance-faible">Partielle</span>. Le flux d'autorisation est décrit. Cependant, aucune règle stricte ne bloque l'usage de <code>bcrypt.hashSync()</code> (synchrone).</td>
+                <td><span class="ajout">Ajout proposé :</span> Ajouter une règle Oxlint interdisant l'import ou l'usage des méthodes synchrones de bcrypt. Créer un script vérifiant que <code>JWT_SECRET</code> dans <code>.env</code> fait plus de 32 caractères.</td>
+            </tr>
+            <tr>
+                <td><strong>5. Programmation Fonctionnelle & TypeScript</strong><br><span class="source">[seance-01.pdf, page 7-19]</span></td>
+                <td><code>backend/tsconfig.json</code> et <code>frontend/tsconfig.app.json</code> (<code>strict: true</code>)<br><code>backend/.oxlintrc.json</code></td>
+                <td><span class="correspondance-forte">Forte</span>. Le refus de <code>any</code> et les vérifications strictes assurent une base solide.</td>
+                <td><span class="ecart">Écart :</span> L'immuabilité (privilégier <code>const</code>) n'est pas garantie par défaut. <span class="ajout">Ajout :</span> S'assurer que la règle <code>prefer-const</code> est configurée en erreur critique dans Oxlint.</td>
+            </tr>
+            <tr>
+                <td><strong>6. HTML & DOM (Sécurité XSS)</strong><br><span class="source">[seance-05.pdf, page 6-15], [seance-06.pdf]</span></td>
+                <td><code>frontend/.oxlintrc.json</code> (Linter frontend)</td>
+                <td><span class="correspondance-faible">Faible</span>. Les guides ne garantissent pas explicitement l'interdiction de <code>innerHTML</code>.</td>
+                <td><span class="ajout">Ajout proposé :</span> Imposer la règle linter <code>react/no-danger</code> (pour dangerouslySetInnerHTML) et bloquer l'usage de <code>innerHTML</code> natif.</td>
+            </tr>
+            <tr>
+                <td><strong>7. Conventions React & JSX</strong><br><span class="source">[seance-07.pdf], [seance-08.pdf], [seance-10.pdf]</span></td>
+                <td><code>frontend/.oxlintrc.json</code> (Règles React)</td>
+                <td><span class="correspondance-forte">Forte</span>. L'orchestrateur garantit la conformité basique du code React via les règles standards.</td>
+                <td><span class="ecart">Écart :</span> Pas de vérification stricte sur la prop <code>key</code> unique issue de la BDD (et non de l'index). <span class="ajout">Ajout :</span> Renforcer Oxlint avec l'activation de <code>react/jsx-key</code> en mode strict.</td>
+            </tr>
+            <tr>
+                <td><strong>8. Style et Material UI (MUI)</strong><br><span class="source">[seance-09.pdf, page 5-19]</span></td>
+                <td>Aucun guide identifié sur la gestion du style.</td>
+                <td><span class="ecart">Absent</span>. Les conventions CSS Modules, ThemeProvider ou l'usage exclusif de la prop <code>sx</code> ne sont ni documentés ni automatisés.</td>
+                <td><span class="ajout">Ajout proposé :</span> Rédiger <code>docs/frontend-style.md</code>. Ajouter des règles Oxlint interdisant l'attribut <code>style={{...}}</code> classique au profit exclusif de <code>sx</code> ou des classes CSS Modules.</td>
+            </tr>
+            <tr>
+                <td><strong>9. Gestion de l'état avec useState & Hooks</strong><br><span class="source">[seance-11.pdf à 14.pdf]</span></td>
+                <td><code>frontend/.oxlintrc.json</code> (<code>react/rules-of-hooks</code> et <code>exhaustive-deps</code>)</td>
+                <td><span class="correspondance-forte">Forte</span>. L'usage de base des hooks et l'ordre d'appel sont strictement encadrés par le Linter.</td>
+                <td><span class="ecart">Écart :</span> Les mutations directes d'état (push, splice) ne sont pas bloquées computationnellement. <span class="ajout">Ajout :</span> Configurer des règles d'immuabilité (ex: plugin fonctionnel) pour interdire toute mutation directe de tableau/objet dans React.</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

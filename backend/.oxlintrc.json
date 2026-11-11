@@ -7,6 +7,23 @@
     // un paramètre préfixé par _ est volontairement inutilisé.
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "typescript/no-explicit-any": "error",
-    "eqeqeq": "error"
+    "eqeqeq": "error",
+    "prefer-const": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "name": "bcrypt",
+        "importNames": ["hashSync", "compareSync"],
+        "message": "Utiliser les méthodes asynchrones de bcrypt."
+      }
+    ],
+    "no-restricted-properties": [
+      "error",
+      {
+        "property": "hashSync",
+        "object": "bcrypt",
+        "message": "Utiliser les méthodes asynchrones de bcrypt."
+      }
+    ]
   }
 }
