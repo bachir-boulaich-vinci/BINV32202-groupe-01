@@ -28,6 +28,28 @@ describe("GET /applications", () => {
     ]);
   });
 
+  it.each([
+    [STUDENT.MATEUSZ_KOWALSKI, APPLICATION.MATEUSZ_CLOUD_MIGRATION, "SELECTED"],
+    [STUDENT.LEA_MERTENS, APPLICATION.LEA_CLOUD_MIGRATION, "REJECTED"],
+  ])("expose le statut %s de l'étudiant propriétaire", async (studentId, applicationId, status) => {
+    const response = await request(app)
+      .get("/applications")
+      .set("Authorization", studentToken(studentId));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: applicationId,
+          status,
+        }),
+      ]),
+    );
+    expect(response.body.every((application: { id: number }) => application.id === applicationId)).toBe(
+      true,
+    );
+  });
+
   it("filtre les candidatures par période", async () => {
     const response = await request(app)
       .get("/applications?period=P2")
@@ -59,6 +81,43 @@ describe("POST /applications", () => {
       message: "Sujet intéressant.",
       status: "IN_PROGRESS",
     });
+  });
+
+  it("crée sans message, puis rend la candidature au bon étudiant uniquement", async () => {
+    const created = await request(app)
+      .post("/applications")
+      .set("Authorization", studentToken(STUDENT.DMYTRO_KOVALENKO))
+      .send({ offerId: OFFER.INTERNAL_CHATBOT });
+
+    expect(created.status).toBe(201);
+    expect(created.body).toMatchObject({
+      offerId: OFFER.INTERNAL_CHATBOT,
+      message: null,
+      status: "IN_PROGRESS",
+    });
+
+    const ownApplications = await request(app)
+      .get("/applications")
+      .set("Authorization", studentToken(STUDENT.DMYTRO_KOVALENKO));
+    expect(ownApplications.status).toBe(200);
+    expect(ownApplications.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: created.body.id,
+          offerId: OFFER.INTERNAL_CHATBOT,
+          message: null,
+          status: "IN_PROGRESS",
+        }),
+      ]),
+    );
+
+    const otherApplications = await request(app)
+      .get("/applications")
+      .set("Authorization", studentToken(STUDENT.LUCAS_DUPONT));
+    expect(otherApplications.status).toBe(200);
+    expect(otherApplications.body).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: created.body.id })]),
+    );
   });
 
   it("refuse une seconde candidature active pour la même offre", async () => {
@@ -93,6 +152,25 @@ describe("DELETE /applications/:id", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("WITHDRAWN");
+
+    const listed = await request(app)
+      .get("/applications")
+      .set("Authorization", studentToken(STUDENT.LUCAS_DUPONT));
+    expect(listed.status).toBe(200);
+    expect(listed.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: APPLICATION.LUCAS_FLEET_APP,
+          status: "WITHDRAWN",
+        }),
+      ]),
+    );
+
+    const repeated = await request(app)
+      .delete(`/applications/${APPLICATION.LUCAS_FLEET_APP}`)
+      .set("Authorization", studentToken(STUDENT.LUCAS_DUPONT));
+    expect(repeated.status).toBe(409);
+    expect(repeated.body.error.code).toBe("APPLICATION_PROCESSED");
   });
 
   it("refuse le retrait d'une candidature appartenant à un autre étudiant", async () => {

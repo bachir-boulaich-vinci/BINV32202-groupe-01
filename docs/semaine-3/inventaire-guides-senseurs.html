@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inventaire des guides et senseurs - Gesta</title>
+    <style>
+      :root {
+        --ink: #172033;
+        --muted: #5d687c;
+        --line: #d7deeb;
+        --surface: #fff;
+        --soft: #f4f7fb;
+        --blue: #2258c7;
+        --blue-soft: #eaf0ff;
+        --green: #147d5a;
+        --orange: #9b5800;
+        --red: #b42318;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: #edf1f7;
+        line-height: 1.55;
+      }
+      header {
+        padding: 3.75rem max(1.5rem, calc((100% - 1180px) / 2));
+        color: white;
+        background: linear-gradient(135deg, #172c69, #2258c7);
+      }
+      header h1 {
+        max-width: 900px;
+        margin: 0;
+        font-size: clamp(2rem, 5vw, 3.7rem);
+        line-height: 1.1;
+      }
+      header p {
+        max-width: 850px;
+        margin: 1rem 0 0;
+        color: #dce6ff;
+        font-size: 1.08rem;
+      }
+      main { width: min(1180px, calc(100% - 3rem)); margin: 2rem auto 4rem; }
+      section {
+        margin-top: 2rem;
+        padding: 2rem;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgb(23 32 51 / 5%);
+      }
+      h2 { margin-top: 0; font-size: 1.65rem; line-height: 1.2; }
+      h3 { margin: .2rem 0 .45rem; line-height: 1.25; }
+      .muted { color: var(--muted); }
+      .intro {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      .card {
+        padding: 1.1rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--soft);
+      }
+      .card p { margin: 0; color: var(--muted); }
+      .badge {
+        display: inline-block;
+        margin: .15rem .25rem .15rem 0;
+        padding: .18rem .55rem;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 700;
+      }
+      .guide { color: #153d9b; background: var(--blue-soft); }
+      .sensor { color: #075e45; background: #e3f5ee; }
+      .inference { color: var(--orange); background: #fff1dc; }
+      .compute { color: #5b3b91; background: #f0e9fb; }
+      .done { color: #075e45; background: #e3f5ee; }
+      .configured { color: #6b4a00; background: #fff1dc; }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; min-width: 920px; }
+      th, td {
+        padding: .85rem .75rem;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: #30425f;
+        background: var(--soft);
+        font-size: .85rem;
+        letter-spacing: .02em;
+      }
+      tbody tr:hover { background: #f8faff; }
+      td:first-child { width: 19%; font-weight: 700; }
+      td:nth-child(2) { width: 18%; }
+      td:nth-child(5) { width: 13%; }
+      code {
+        padding: .1rem .3rem;
+        color: #153d9b;
+        background: var(--blue-soft);
+        border-radius: 4px;
+        font-family: "Cascadia Code", Consolas, monospace;
+        font-size: .88em;
+        overflow-wrap: anywhere;
+      }
+      .mechanism {
+        position: relative;
+        cursor: help;
+        border-bottom: 2px dotted var(--blue);
+      }
+      .mechanism::after {
+        position: absolute;
+        left: 0;
+        bottom: calc(100% + .55rem);
+        z-index: 3;
+        width: min(360px, 70vw);
+        padding: .65rem .75rem;
+        color: white;
+        background: #182238;
+        border-radius: 8px;
+        box-shadow: 0 8px 20px rgb(23 32 51 / 20%);
+        content: attr(data-path);
+        font-size: .8rem;
+        font-weight: 400;
+        line-height: 1.4;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(.3rem);
+        transition: opacity .15s ease, transform .15s ease;
+      }
+      .mechanism:hover::after,
+      .mechanism:focus::after {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .mechanism:focus { outline: 2px solid var(--blue); outline-offset: 3px; }
+      .note {
+        margin-top: 1rem;
+        padding: 1rem;
+        color: #30425f;
+        background: var(--soft);
+        border-left: 4px solid var(--blue);
+        border-radius: 6px;
+      }
+      ul { margin-top: .5rem; }
+      li + li { margin-top: .35rem; }
+      @media (max-width: 760px) {
+        main { width: min(100% - 1.5rem, 1180px); }
+        section { padding: 1.25rem; }
+        .intro { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Inventaire des guides et senseurs de Gesta</h1>
+      <p>
+        Classement des mécanismes selon leur rôle (guide ou senseur) et leur nature
+        (inférentielle ou computationnelle). Survolez un mécanisme souligné pour voir
+        le fichier ou l’outil dans lequel il est défini ou utilisé.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <h2>Méthode et état global</h2>
+        <div class="intro">
+          <div class="card">
+            <h3>Guide</h3>
+            <p>Décrit, demande ou impose une manière de développer, tester ou utiliser le projet.</p>
+          </div>
+          <div class="card">
+            <h3>Senseur</h3>
+            <p>Observe, valide, refuse ou signale un état incorrect.</p>
+          </div>
+          <div class="card">
+            <h3>Inférentiel</h3>
+            <p>Fondé sur une règle métier, une intention ou une interprétation humaine.</p>
+          </div>
+          <div class="card">
+            <h3>Computationnel</h3>
+            <p>Exécuté automatiquement par un outil, le compilateur, SQLite ou le runtime.</p>
+          </div>
+        </div>
+        <div class="note">
+          <strong>Vérification de la séance :</strong> <code>npm run check</code> a réussi
+          depuis la racine du dépôt. Oxlint, TypeScript, les tests backend et frontend,
+          ainsi que les builds backend et frontend ont tous terminé avec succès.
+          Les tests ont donné <strong>126 tests backend</strong> et
+          <strong>51 tests frontend</strong> passés.
+        </div>
+      </section>
+
+      <section>
+        <h2>Guides inférentiels</h2>
+        <p class="muted">Documentation des règles, intentions et conventions du projet.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Mécanisme</th><th>Fichier ou outil</th><th>Ce qu’il demande</th><th>Exemple</th><th>État</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="docs/cdc_gesta_developpement.md">Cahier des charges métier</span></td>
+                <td><code>docs/cdc_gesta_developpement.md</code></td>
+                <td>Définit les exigences fonctionnelles, règles de gestion, hypothèses et décisions client.</td>
+                <td>Un contact sans rôle reste enregistré mais ne peut pas se connecter.</td>
+                <td><span class="badge configured">Décrit</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="docs/architecture.md">Architecture générale</span></td>
+                <td><code>docs/architecture.md</code></td>
+                <td>Décrit les couches et leurs responsabilités.</td>
+                <td><code>controllers → services → repositories → SQLite</code>.</td>
+                <td><span class="badge configured">Décrit</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="docs/architecture-offres-et-filtre-periode.html">Architecture offres et filtre</span></td>
+                <td><code>docs/architecture-offres-et-filtre-periode.html</code></td>
+                <td>Décrit le parcours de consultation et les cas de test attendus.</td>
+                <td>Tester chaque période, les paramètres répétés et les profils différents.</td>
+                <td><span class="badge configured">Décrit</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="docs/workflow-visualisation-offre.html">Workflow de visualisation</span></td>
+                <td><code>docs/workflow-visualisation-offre.html</code></td>
+                <td>Décrit le flux utilisateur et les contrôles d’accès.</td>
+                <td>Protéger la route par <code>authenticate</code>, puis <code>authorize</code>.</td>
+                <td><span class="badge configured">Décrit</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="README.md">README opérationnel</span></td>
+                <td><code>README.md</code></td>
+                <td>Documente installation, commandes, choix techniques et comportements attendus.</td>
+                <td><code>npm run check</code> doit être lancé avant un commit important.</td>
+                <td><span class="badge done">Consulté + vérifié</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/API.md">Contrat API</span></td>
+                <td><code>backend/API.md</code></td>
+                <td>Décrit routes, réponses JSON et erreurs HTTP.</td>
+                <td>Une session absente produit <code>401 UNAUTHENTICATED</code>.</td>
+                <td><span class="badge configured">Décrit</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="docs/seed.md">Données de démonstration</span></td>
+                <td><code>docs/seed.md</code></td>
+                <td>Explique utilisateurs, entreprises, rôles et offres de démonstration.</td>
+                <td>Les contacts peuvent avoir les rôles <code>DEPOSITOR</code>, <code>SIGNATORY</code> ou <code>PROMOTER</code>.</td>
+                <td><span class="badge configured">Décrit</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path=".github/pull_request_template.md">Modèle de pull request</span></td>
+                <td><code>.github/pull_request_template.md</code></td>
+                <td>Demande de vérifier code, tests, droits backend, documentation et navigateur.</td>
+                <td>Cocher que <code>npm run check</code> passe et que les erreurs HTTP sont couvertes.</td>
+                <td><span class="badge configured">Décrit</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Guides computationnels</h2>
+        <p class="muted">Scripts et configurations qui rendent certaines règles exécutables.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Mécanisme</th><th>Fichier ou outil</th><th>Ce qu’il impose</th><th>Exemple</th><th>État</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="package.json">Orchestrateur de qualité</span></td>
+                <td><code>package.json</code></td>
+                <td>Définit les commandes communes et l’ordre du contrôle global.</td>
+                <td><code>npm run check</code> exécute lint, typecheck, tests puis build.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/package.json">Scripts backend</span></td>
+                <td><code>backend/package.json</code></td>
+                <td>Définit lint, typecheck, tests, build et gestion de la base.</td>
+                <td><code>oxlint --deny-warnings</code>, <code>tsc --noEmit</code>, <code>vitest run</code>.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="frontend/package.json">Scripts frontend</span></td>
+                <td><code>frontend/package.json</code></td>
+                <td>Définit lint, typecheck, tests et build React/Vite.</td>
+                <td><code>tsc -b &amp;&amp; vite build</code>.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/tsconfig.json, frontend/tsconfig.app.json">Configurations TypeScript</span></td>
+                <td><code>backend/tsconfig.json</code><br /><code>frontend/tsconfig.app.json</code></td>
+                <td>Imposent typage strict, imports cohérents et absence de variables inutilisées.</td>
+                <td><code>strict: true</code>, <code>noUncheckedIndexedAccess: true</code>.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/.oxlintrc.json, frontend/.oxlintrc.json">Configurations Oxlint</span></td>
+                <td><code>.oxlintrc.json</code> backend/frontend</td>
+                <td>Activent les règles TypeScript, Node, React et hooks.</td>
+                <td>Refus de <code>any</code>, égalité non stricte et mauvaises dépendances de hooks.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/vitest.config.ts, frontend/vite.config.ts">Configurations Vitest/Vite</span></td>
+                <td><code>backend/vitest.config.ts</code><br /><code>frontend/vite.config.ts</code></td>
+                <td>Configurent setups de test, environnement <code>jsdom</code> et proxy API.</td>
+                <td>Le frontend utilise <code>jsdom</code> et réécrit <code>/api</code> vers le backend.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/http/">Requêtes REST manuelles</span></td>
+                <td><code>backend/http/</code></td>
+                <td>Fournissent des exemples de requêtes pour vérifier manuellement l’API.</td>
+                <td>Requêtes de santé, authentification, entreprises et offres.</td>
+                <td><span class="badge configured">Non exécuté</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Senseurs inférentiels</h2>
+        <p class="muted">Évaluation de règles métier ou de sécurité dans le code applicatif.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Mécanisme</th><th>Fichier ou outil</th><th>Ce qu’il vérifie</th><th>Exemple de résultat</th><th>État</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/services/permissions.ts">Règles de permissions</span></td>
+                <td><code>backend/src/services/permissions.ts</code></td>
+                <td>Détermine si un utilisateur est administrateur ou peut consulter les offres.</td>
+                <td>Un contact promoteur/signataire sans déposant ne peut pas lister les offres.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/middlewares/authenticate.ts">Authentification métier</span></td>
+                <td><code>backend/src/middlewares/authenticate.ts</code></td>
+                <td>Vérifie qu’une requête possède un utilisateur courant valide.</td>
+                <td>Une session absente ou invalide produit <code>401 UNAUTHENTICATED</code>.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/middlewares/authorize.ts">Autorisation métier</span></td>
+                <td><code>backend/src/middlewares/authorize.ts</code></td>
+                <td>Applique une règle de droit après authentification.</td>
+                <td>Une règle qui retourne <code>false</code> produit <code>403 FORBIDDEN</code>.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/services/offers.service.ts">Filtrage métier des offres</span></td>
+                <td><code>backend/src/services/offers.service.ts</code></td>
+                <td>Détermine les offres visibles selon le profil connecté.</td>
+                <td>L’étudiant voit les offres publiées ; le déposant voit ses offres.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/config.ts">Règles de configuration</span></td>
+                <td><code>backend/src/config.ts</code></td>
+                <td>Vérifie les invariants de démarrage et de sécurité.</td>
+                <td>Le mode démo est refusé avec <code>NODE_ENV=production</code>.</td>
+                <td><span class="badge done">Testé indirectement</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/utils/token.ts">Vérification des jetons</span></td>
+                <td><code>backend/src/utils/token.ts</code></td>
+                <td>Vérifie signature, algorithme, durée et structure du JWT.</td>
+                <td>Un jeton avec un <code>kind</code> inconnu est rejeté.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="frontend/src/utils/guards.ts">Type guards frontend</span></td>
+                <td><code>frontend/src/utils/guards.ts</code></td>
+                <td>Détermine si un JSON correspond au modèle attendu.</td>
+                <td><code>{ status: "ok" }</code> est accepté ; <code>{ status: "ko" }</code> est refusé.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Senseurs computationnels</h2>
+        <p class="muted">Contrôles automatisés qui calculent un verdict sur le code, les données ou l’environnement.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Mécanisme</th><th>Fichier ou outil</th><th>Ce qu’il contrôle</th><th>Exemple de résultat</th><th>État</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/nodeVersion.ts">Garde de version Node</span></td>
+                <td><code>backend/src/nodeVersion.ts</code></td>
+                <td>Vérifie la compatibilité avec <code>better-sqlite3</code>.</td>
+                <td>Node <code>22.13.1</code> est refusé ; Node <code>22.14.0</code> est accepté.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/requireSupportedNode.ts">Garde de démarrage Node</span></td>
+                <td><code>backend/src/requireSupportedNode.ts</code></td>
+                <td>Arrête le processus avant le chargement de SQLite si Node est trop ancien.</td>
+                <td>Affiche un message puis appelle <code>process.exit(1)</code>.</td>
+                <td><span class="badge done">Testé indirectement</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/config.ts">Validation des variables d’environnement</span></td>
+                <td><code>backend/src/config.ts</code></td>
+                <td>Valide port, secret JWT, mode démo et environnement.</td>
+                <td>Un port nul, négatif, non entier ou supérieur à <code>65535</code> provoque une erreur.</td>
+                <td><span class="badge done">Testé indirectement</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/src/db/migrations/001_initial.sql">Contraintes SQLite</span></td>
+                <td><code>backend/src/db/migrations/001_initial.sql</code></td>
+                <td>Vérifie types stricts, clés étrangères, unicités et contraintes <code>CHECK</code>.</td>
+                <td>Une offre avec <code>status = "Publiée"</code> ou un titre vide est refusée.</td>
+                <td><span class="badge done">Testé</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/tests/db/migrations.test.ts">Tests de migration</span></td>
+                <td><code>backend/tests/db/migrations.test.ts</code></td>
+                <td>Vérifient l’application correcte et unique des migrations.</td>
+                <td>Une migration est enregistrée dans <code>schema_migrations</code>.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/tests/db/seed.test.ts">Tests de seed</span></td>
+                <td><code>backend/tests/db/seed.test.ts</code></td>
+                <td>Vérifient la cohérence des données initiales.</td>
+                <td>Les identifiants de seed permettent de construire des scénarios valides.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/tests/">Tests API backend</span></td>
+                <td><code>backend/tests/</code></td>
+                <td>Vérifient réponses HTTP, erreurs, droits, filtres et scénarios métier.</td>
+                <td>Une requête sans session reçoit <code>401</code> ; un droit insuffisant reçoit <code>403</code>.</td>
+                <td><span class="badge done">126 passés</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="frontend/tests/">Tests frontend</span></td>
+                <td><code>frontend/tests/</code></td>
+                <td>Vérifient rendu React, interactions, hooks et réponses API simulées.</td>
+                <td>Une réponse API invalide déclenche l’état d’erreur attendu.</td>
+                <td><span class="badge done">51 passés</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="Oxlint via backend/package.json et frontend/package.json">Oxlint</span></td>
+                <td><code>oxlint --deny-warnings</code></td>
+                <td>Analyse statiquement le code et les règles React/TypeScript.</td>
+                <td>Le contrôle échoue en présence d’un <code>any</code> ou d’un avertissement.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="TypeScript via backend/tsconfig.json et frontend/tsconfig.app.json">TypeScript</span></td>
+                <td><code>tsc --noEmit</code> et <code>tsc -b</code></td>
+                <td>Vérifie les types, imports et variables inutilisées.</td>
+                <td>Une propriété potentiellement absente est signalée par le compilateur.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="backend/package.json et backend/scripts/copyMigrations.js">Build backend</span></td>
+                <td><code>backend/package.json</code></td>
+                <td>Compile TypeScript et copie les migrations vers <code>dist</code>.</td>
+                <td><code>tsc -p tsconfig.build.json</code> termine sans erreur.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+              <tr>
+                <td><span class="mechanism" tabindex="0" data-path="frontend/package.json et frontend/vite.config.ts">Build frontend</span></td>
+                <td><code>vite build</code></td>
+                <td>Compile TypeScript et produit les assets de production.</td>
+                <td>Vite a transformé 61 modules et généré <code>frontend/dist</code>.</td>
+                <td><span class="badge done">Exécuté</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Limites de la vérification</h2>
+        <ul>
+          <li>Les commandes lint, typecheck, tests et build ont été exécutées dans cette séance.</li>
+          <li>Les requêtes REST de <code>backend/http/</code> n’ont pas été lancées avec un client HTTP.</li>
+          <li>Le serveur backend et le navigateur n’ont pas été démarrés séparément dans cette séance.</li>
+          <li>Les documents de spécification et d’architecture sont des guides ; leur contenu est couvert seulement lorsque des tests correspondants existent.</li>
+          <li>La première tentative de <code>npm run check</code> depuis le dossier parent a échoué faute de <code>package.json</code> à cet emplacement ; la seconde, depuis la racine réelle du projet, a réussi.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

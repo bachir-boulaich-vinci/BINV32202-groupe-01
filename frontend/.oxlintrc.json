@@ -5,8 +5,21 @@
   "rules": {
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "error",
+    "react/jsx-key": "error",
+    "react/no-danger": "error",
+    "react/forbid-dom-props": ["error", { "forbid": ["style"] }],
     "react/only-export-components": ["warn", { "allowConstantExport": true }],
     "typescript/no-explicit-any": "error",
-    "eqeqeq": "error"
+    "eqeqeq": "error",
+    "prefer-const": "error",
+    "no-restricted-properties": [
+      "error",
+      { "property": "push", "message": "Ne pas muter une collection React." },
+      { "property": "splice", "message": "Ne pas muter une collection React." },
+      {
+        "property": "innerHTML",
+        "message": "Utiliser textContent pour éviter les injections XSS."
+      }
+    ]
   }
 }
