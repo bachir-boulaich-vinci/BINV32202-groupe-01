@@ -28,4 +28,4 @@ Problèmes restants: aucun
 # IA Usage
 
 Bachir: 34/200
-Marcus: 
+Marcus: 24
