@@ -7,7 +7,12 @@ import { isUnauthorized } from "../utils/api.ts";
  * Offres visibles par l'utilisateur, choisies par le backend selon son profil.
  * onUnauthorized doit être stable (useCallback) pour ne pas relancer le chargement.
  */
-export const useOffers = (token: string, onUnauthorized: () => void, period?: PeriodCode) => {
+export const useOffers = (
+  token: string,
+  onUnauthorized: () => void,
+  period?: PeriodCode,
+  search?: string,
+) => {
   // Le résultat mémorise la requête (jeton + période) à laquelle il répond :
   // tant qu'il ne correspond pas à la requête courante, le chargement est en cours.
   const [result, setResult] = useState<{
@@ -15,12 +20,12 @@ export const useOffers = (token: string, onUnauthorized: () => void, period?: Pe
     offers: Offer[];
     error: string | null;
   } | null>(null);
-  const requestKey = `${token}|${period ?? ""}`;
+  const requestKey = `${token}|${period ?? ""}|${search?.trim() ?? ""}`;
 
   useEffect(() => {
     const controller = new AbortController();
 
-    getOffers(token, controller.signal, period)
+    getOffers(token, controller.signal, period, search)
       .then((data) => {
         if (!controller.signal.aborted) setResult({ key: requestKey, offers: data, error: null });
       })
@@ -38,7 +43,7 @@ export const useOffers = (token: string, onUnauthorized: () => void, period?: Pe
       });
 
     return () => controller.abort();
-  }, [token, onUnauthorized, period, requestKey]);
+  }, [token, onUnauthorized, period, search, requestKey]);
 
   const current = result?.key === requestKey ? result : null;
   return {

@@ -6,8 +6,12 @@ export const getOffers = async (
   token: string,
   signal?: AbortSignal,
   period?: PeriodCode,
+  search?: string,
 ): Promise<Offer[]> => {
-  const query = period ? `?period=${encodeURIComponent(period)}` : "";
+  const params = new URLSearchParams();
+  if (period) params.set("period", period);
+  if (search?.trim()) params.set("q", search.trim());
+  const query = params.size > 0 ? `?${params.toString()}` : "";
   const response = await fetch(`${API_URL}/offers${query}`, {
     headers: { Authorization: token },
     signal,
