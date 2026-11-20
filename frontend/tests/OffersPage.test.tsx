@@ -86,6 +86,131 @@ describe("OffersPage", () => {
     expect(screen.getByText("Toutes les offres, tous statuts confondus.")).toBeInTheDocument();
   });
 
+  it("combine la recherche par titre avec la période", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers": () => Response.json(offers),
+      "/api/offers?period=P2": () => Response.json([offers[0]]),
+      "/api/offers?period=P2&q=portail": () => Response.json([offers[0]]),
+      "/api/offers?q=portail": () => Response.json([offers[0]]),
+    });
+
+    render(<OffersPage user={adminUser} token="jeton" onUnauthorized={vi.fn()} />);
+    await screen.findByText("2 offres");
+
+    fireEvent.change(screen.getByLabelText("Période"), { target: { value: "P2" } });
+    await screen.findByText("1 offre");
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "  portail  " },
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith(
+        "/api/offers?period=P2&q=portail",
+        expect.anything(),
+      ),
+    );
+  });
+
+  it("affiche un message adapté quand aucune offre ne correspond", async () => {
+    stubFetch({
+      "/api/offers": () => Response.json(offers),
+      "/api/offers?q=inexistant": () => Response.json([]),
+    });
+
+    render(<OffersPage user={studentUser} token="jeton" onUnauthorized={vi.fn()} />);
+    await screen.findByText("2 offres");
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "inexistant" },
+    });
+
+    expect(await screen.findByText("Aucune offre ne correspond à la recherche.")).toBeInTheDocument();
+  });
+
+  it("recherche un texte contenu dans le titre sans distinguer la casse", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers": () => Response.json([offers[0], offers[1]]),
+      "/api/offers?q=PORTAIL": () => Response.json([offers[0]]),
+    });
+
+    render(<OffersPage user={adminUser} token="jeton" onUnauthorized={vi.fn()} />);
+    await screen.findByText("2 offres");
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "PORTAIL" },
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith("/api/offers?q=PORTAIL", expect.anything()),
+    );
+    expect(await screen.findByText("Refonte du portail client")).toBeInTheDocument();
+    expect(screen.queryByText("Tableau de bord de qualité des données")).not.toBeInTheDocument();
+  });
+
+  it("ignore les espaces au début et à la fin du texte saisi", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers": () => Response.json(offers),
+      "/api/offers?q=portail": () => Response.json([offers[0]]),
+    });
+
+    render(<OffersPage user={adminUser} token="jeton" onUnauthorized={vi.fn()} />);
+    await screen.findByText("2 offres");
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "  portail  " },
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith("/api/offers?q=portail", expect.anything()),
+    );
+  });
+
+  it("affiche les offres normalement accessibles quand la recherche est vide", async () => {
+    const fetchMock = stubFetch({
+      "/api/offers": () => Response.json(offers),
+    });
+
+    render(<OffersPage user={studentUser} token="jeton" onUnauthorized={vi.fn()} />);
+    await screen.findByText("2 offres");
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "   " },
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenLastCalledWith("/api/offers", expect.anything()),
+    );
+    expect(await screen.findByText("2 offres")).toBeInTheDocument();
+  });
+
+  it("conserve les offres publiées seules pour un étudiant pendant une recherche", async () => {
+    const publishedOffer = {
+      ...offers[0],
+      id: 7,
+      title: "Assistant conversationnel interne",
+      status: "PUBLISHED",
+    };
+    stubFetch({
+      "/api/offers": () => Response.json([publishedOffer]),
+      "/api/offers?q=assistant": () => Response.json([publishedOffer]),
+      "/api/offers?q=portail": () => Response.json([]),
+    });
+
+    render(<OffersPage user={studentUser} token="jeton" onUnauthorized={vi.fn()} />);
+    await screen.findByText("1 offre");
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "assistant" },
+    });
+    expect(await screen.findByText("Assistant conversationnel interne")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText("Rechercher par titre"), {
+      target: { value: "portail" },
+    });
+    expect(await screen.findByText("Aucune offre ne correspond à la recherche.")).toBeInTheDocument();
+  });
+
   it("affiche un refus d'accès renvoyé par le backend", async () => {
     stubFetch({ "/api/offers": () => new Response(null, { status: 403 }) });
 

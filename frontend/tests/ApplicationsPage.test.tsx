@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import ApplicationsPage from "../src/pages/ApplicationsPage.tsx";
 import { stubFetch } from "./helpers/fetchMock.ts";
@@ -26,6 +26,28 @@ const applications = [
     status: "WITHDRAWN",
     appliedAt: "2026-09-30 10:30:00",
   },
+  {
+    id: 3,
+    offerId: 4,
+    offerTitle: "Migration cloud",
+    companyShortName: "Lumen Cloud",
+    academicYear: "2026-2027",
+    period: "P1",
+    message: null,
+    status: "SELECTED",
+    appliedAt: "2026-09-28 10:30:00",
+  },
+  {
+    id: 4,
+    offerId: 5,
+    offerTitle: "Rapport PDF",
+    companyShortName: "Orbis",
+    academicYear: "2026-2027",
+    period: "P1",
+    message: null,
+    status: "REJECTED",
+    appliedAt: "2026-09-27 10:30:00",
+  },
 ];
 
 describe("ApplicationsPage", () => {
@@ -36,8 +58,24 @@ describe("ApplicationsPage", () => {
 
     expect(await screen.findByText("Application React de gestion de flotte")).toBeInTheDocument();
     expect(screen.getByText("En cours")).toBeInTheDocument();
+    expect(screen.getByText("Retenue")).toBeInTheDocument();
+    expect(screen.getByText("Non retenue")).toBeInTheDocument();
     expect(screen.getByText("Retirée")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Retirer" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Retirer" })).toHaveLength(1);
+
+    const inProgressRow = screen.getByText("Application React de gestion de flotte").closest("tr");
+    const selectedRow = screen.getByText("Migration cloud").closest("tr");
+    const rejectedRow = screen.getByText("Rapport PDF").closest("tr");
+    const withdrawnRow = screen.getByText("API REST de facturation").closest("tr");
+
+    expect(inProgressRow).not.toBeNull();
+    expect(selectedRow).not.toBeNull();
+    expect(rejectedRow).not.toBeNull();
+    expect(withdrawnRow).not.toBeNull();
+    expect(within(inProgressRow as HTMLTableRowElement).getByRole("button", { name: "Retirer" })).toBeInTheDocument();
+    expect(within(selectedRow as HTMLTableRowElement).queryByRole("button", { name: "Retirer" })).not.toBeInTheDocument();
+    expect(within(rejectedRow as HTMLTableRowElement).queryByRole("button", { name: "Retirer" })).not.toBeInTheDocument();
+    expect(within(withdrawnRow as HTMLTableRowElement).queryByRole("button", { name: "Retirer" })).not.toBeInTheDocument();
   });
 
   it("filtre par période", async () => {

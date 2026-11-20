@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audit des tests - candidatures EF-32 et EF-33 | Gesta</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --paper: #ffffff;
+      --ink: #17243a;
+      --muted: #66758a;
+      --line: #dde5ef;
+      --navy: #172f50;
+      --blue: #326aa2;
+      --green-bg: #e8f5ef;
+      --green: #176a4d;
+      --amber-bg: #fff1d6;
+      --amber: #8a5a08;
+      --red-bg: #fdebea;
+      --red: #9d3942;
+      --gray-bg: #edf2f7;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+    .hero {
+      background: linear-gradient(125deg, #122743, #1b4d79);
+      color: #fff;
+      padding: 42px 0 38px;
+    }
+    .container { max-width: 1450px; margin: 0 auto; padding: 0 28px; }
+    .eyebrow {
+      margin: 0 0 12px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      opacity: .75;
+    }
+    h1 {
+      max-width: 980px;
+      margin: 0 0 12px;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .lead { max-width: 930px; margin: 0; color: #dfeaf5; }
+    main { padding: 28px 0 60px; }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .metric {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .metric strong { display: block; font-size: 30px; line-height: 1.1; }
+    .metric span { color: var(--muted); font-size: 12px; }
+    .section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(25, 48, 78, .05);
+      padding: 22px;
+    }
+    .section h2 { margin: 0 0 6px; font-size: 21px; }
+    .section > p { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    th {
+      background: #eef3f8;
+      color: #526881;
+      font-size: 11px;
+      letter-spacing: .06em;
+      text-align: left;
+      text-transform: uppercase;
+      padding: 13px 14px;
+    }
+    th:nth-child(1) { width: 31%; }
+    th:nth-child(2) { width: 34%; }
+    th:nth-child(3) { width: 35%; }
+    td {
+      vertical-align: top;
+      border-top: 1px solid var(--line);
+      padding: 14px;
+      font-size: 13px;
+    }
+    tbody tr:nth-child(even) { background: #fbfdff; }
+    tbody tr:hover { background: #f6f9fd; }
+    .case { font-weight: 800; color: #203a5a; }
+    .subcase { display: block; margin-top: 4px; color: var(--muted); font-weight: 400; }
+    code {
+      padding: 1px 5px;
+      border-radius: 5px;
+      background: #edf2f7;
+      color: #294867;
+      font: 12px ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    .assertion { display: block; margin-bottom: 5px; }
+    .badge {
+      display: inline-block;
+      margin-bottom: 7px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 850;
+    }
+    .badge.covered { background: var(--green-bg); color: var(--green); }
+    .badge.partial { background: var(--amber-bg); color: var(--amber); }
+    .badge.missing { background: var(--red-bg); color: var(--red); }
+    .badge.dismissed { background: var(--gray-bg); color: #59697d; }
+    .source { color: var(--muted); font-size: 12px; }
+    .source a { color: #2d6196; }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .legend span { color: var(--muted); font-size: 12px; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 800px) {
+      .container { padding: 0 16px; }
+      .hero { padding: 28px 0; }
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <p class="eyebrow">Semaine 4 · Qualité logicielle</p>
+      <h1>Audit des tests des candidatures EF-32 &amp; EF-33</h1>
+      <p class="lead">Matrice des cas à vérifier, du niveau de preuve actuel et des écarts confirmés ou écartés après lecture des tests backend, frontend et du parcours étudiant.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="summary" aria-label="Synthèse">
+        <article class="metric"><strong>16</strong><span>cas évalués</span></article>
+        <article class="metric"><strong>11</strong><span>couvertures existantes</span></article>
+        <article class="metric"><strong>4</strong><span>manques confirmés</span></article>
+        <article class="metric"><strong>1</strong><span>constat écarté</span></article>
+      </section>
+
+      <section class="section">
+        <h2>Tableau de vérification</h2>
+        <p>Le troisième niveau distingue les lacunes réellement observées des points jugés déjà suffisamment protégés ou hors périmètre immédiat.</p>
+        <div class="legend" aria-label="Légende">
+          <span><span class="badge covered">Couvert</span> comportement prouvé</span>
+          <span><span class="badge partial">Partiel</span> preuve incomplète</span>
+          <span><span class="badge missing">Manque confirmé</span> ajout recommandé</span>
+          <span><span class="badge dismissed">Écarté</span> cas déjà couvert</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Cas à vérifier</th>
+                <th scope="col">Test existant ou assertion utile</th>
+                <th scope="col">Manque confirmé ou constat écarté</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="case">EF-32 · Candidater à une offre publiée</span><span class="subcase">Message facultatif et normalisation</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion"><code>POST /applications</code> vérifie <code>201</code>.</span>
+                  <span class="assertion">Contrôle du statut <code>IN_PROGRESS</code> et conservation du message sans espaces superflus.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 72-84.</span>
+                </td>
+                <td>
+                  <span class="badge missing">Manque confirmé</span>
+                  Le formulaire React n'est pas testé : saisie du message, appel <code>POST /api/applications</code>, bouton d'envoi et passage à « Candidature envoyée ».
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Candidater sans message</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion">L'API accepte une candidature sans message et renvoie <code>message: null</code>.</span>
+                  <span class="assertion">La candidature est visible uniquement pour son étudiant.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 86-121.</span>
+                </td>
+                <td><span class="badge dismissed">Écarté</span> Couverture suffisante côté API pour la création sans message et l'isolation propriétaire.</td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Empêcher une seconde candidature active</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion">Une nouvelle candidature sur une offre déjà active renvoie <code>409</code>.</span>
+                  <span class="assertion">Le code d'erreur attendu est <code>APPLICATION_EXISTS</code>.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 123-130.</span>
+                </td>
+                <td>
+                  <span class="badge missing">Manque confirmé</span>
+                  Ajouter un test React du retour <code>409</code> et de son affichage dans le formulaire.
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Refuser une offre non publiée</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion">Les offres cloud migration et PDF reports sont testées comme non publiées.</span>
+                  <span class="assertion">Statut attendu : <code>400</code>, code <code>OFFER_NOT_PUBLISHED</code>.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 133-143.</span>
+                </td>
+                <td><span class="badge dismissed">Écarté</span> Les deux états non publiés du seed sont représentés ; aucune régression immédiate visible.</td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Offrir inexistante</span></td>
+                <td>
+                  <span class="badge partial">Partiel</span>
+                  Aucun test HTTP ne poste actuellement avec un <code>offerId</code> inconnu.
+                </td>
+                <td>
+                  <span class="badge missing">Manque confirmé</span>
+                  Vérifier <code>404</code>, code <code>OFFER_NOT_FOUND</code> et l'absence d'insertion en base.
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Validation du corps de requête</span><span class="subcase">Objet absent, offerId invalide, message invalide</span></td>
+                <td>
+                  <span class="badge partial">Partiel</span>
+                  Les créations valides sont couvertes, mais aucun test ne vise directement les branches de validation du contrôleur.
+                </td>
+                <td>
+                  <span class="badge missing">Manque confirmé</span>
+                  Tester les valeurs non numériques ou ≤ 0, le corps absent et un message non textuel ; vérifier <code>400 INVALID_BODY</code>.
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Retirer une candidature en cours</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion">Le <code>DELETE</code> renvoie <code>200</code> et le statut devient <code>WITHDRAWN</code>.</span>
+                  <span class="assertion">Une seconde demande renvoie <code>409 APPLICATION_PROCESSED</code>.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 148-173.</span>
+                </td>
+                <td><span class="badge covered">Couvert</span> La transition métier principale et son effet répétitif sont vérifiés.</td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Retirer une candidature appartenant à un autre étudiant</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion">La tentative par un autre étudiant renvoie <code>404</code>.</span>
+                  <span class="assertion">Le code d'erreur attendu est <code>APPLICATION_NOT_FOUND</code>.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 176-182.</span>
+                </td>
+                <td><span class="badge dismissed">Écarté</span> La propriété est explicitement testée côté API.</td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Retirer une candidature déjà traitée</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion">Une candidature <code>SELECTED</code> ne peut pas être retirée.</span>
+                  <span class="assertion">Statut attendu : <code>409 APPLICATION_PROCESSED</code>.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 185-191.</span>
+                </td>
+                <td><span class="badge dismissed">Écarté</span> Le cas traité est prouvé avec une candidature réelle du seed.</td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-32 · Identifier invalide au retrait</span><span class="subcase">0, négatif ou valeur textuelle</span></td>
+                <td>
+                  <span class="badge partial">Partiel</span>
+                  Aucun test ne passe une valeur d'identifiant mal formée au contrôleur.
+                </td>
+                <td>
+                  <span class="badge missing">Manque confirmé</span>
+                  Vérifier <code>400 INVALID_QUERY</code> pour les identifiants zéro, négatifs ou non entiers.
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-33 · Liste limitée aux candidatures de l'étudiant connecté</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend</span>
+                  <span class="assertion">La liste d'Inès contient exactement ses deux candidatures avec leurs statuts.</span>
+                  <span class="assertion">La création ultérieure n'apparaît pas pour un autre étudiant.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, lignes 15-29 et 102-121.</span>
+                </td>
+                <td><span class="badge dismissed">Écarté</span> La propriété vis-à-vis du propriétaire est vérifiée au niveau API.</td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-33 · Afficher les quatre statuts français</span><span class="subcase">En cours, Retenue, Non retenue, Retirée</span></td>
+                <td>
+                  <span class="badge covered">Couvert frontend</span>
+                  <span class="assertion">Le test affiche « En cours », « Retenue », « Non retenue » et « Retirée ».</span>
+                  <span class="assertion">Il vérifie qu'une seule ligne, celle avec le statut « En cours », contient le bouton « Retirer ».</span>
+                  <span class="source"><a href="../../frontend/tests/ApplicationsPage.test.tsx">frontend/tests/ApplicationsPage.test.tsx</a>, test « affiche les candidatures et leurs libellés ».</span>
+                </td>
+                <td>
+                  <span class="badge covered">Manque corrigé</span>
+                  Le test couvre désormais les quatre statuts français et l'absence du bouton « Retirer » sur les candidatures Retenue, Non retenue et Retirée.
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-33 · Filtrer par période</span></td>
+                <td>
+                  <span class="badge covered">Couvert backend et frontend</span>
+                  <span class="assertion">Backend : filtre <code>?period=P2</code> et résultat attendu.</span>
+                  <span class="assertion">Frontend : changement du filtre vers P1 puis état vide.</span>
+                  <span class="source"><a href="../../backend/tests/applications.test.ts">backend/tests/applications.test.ts</a>, ligne 53 ; <a href="../../frontend/tests/ApplicationsPage.test.tsx">frontend/tests/ApplicationsPage.test.tsx</a>, ligne 43.</span>
+                </td>
+                <td><span class="badge dismissed">Écarté</span> Les appels API et l'état vide sont déjà vérifiés.</td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-33 · Période invalide</span></td>
+                <td>
+                  <span class="badge partial">Partiel</span>
+                  Aucun test HTTP ne passe une période hors de <code>P1</code>, <code>P2</code> ou <code>OTHER</code>.
+                </td>
+                <td>
+                  <span class="badge missing">Manque confirmé</span>
+                  Vérifier <code>400 INVALID_QUERY</code> sur <code>?period=INVALID</code>.
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">EF-33 · Retrait depuis la page Mes candidatures</span></td>
+                <td>
+                  <span class="badge covered">Couvert frontend</span>
+                  <span class="assertion">Le clic ouvre la confirmation avec le texte attendu.</span>
+                  <span class="assertion">Le test vérifie ensuite un appel <code>DELETE /api/applications/1</code>.</span>
+                  <span class="source"><a href="../../frontend/tests/ApplicationsPage.test.tsx">frontend/tests/ApplicationsPage.test.tsx</a>, lignes 59-76.</span>
+                </td>
+                <td>
+                  <span class="badge partial">Partiel</span>
+                  Ajouter les branches annulation de confirmation, erreur <code>409/500</code>, rechargement après succès et mise à jour du statut.
+                </td>
+              </tr>
+
+              <tr>
+                <td><span class="case">Rôles, authentification et session expirée</span></td>
+                <td>
+                  <span class="badge covered">Couvert partiellement</span>
+                  <span class="assertion">Backend : accès GET refusé pour un administrateur avec <code>403</code>.</span>
+                  <span class="assertion">La convention générale fournit aussi des tests 401 dans les autres suites API.</span>
+                </td>
+                <td>
+                  <span class="badge missing">Manque confirmé au périmètre</span>
+                  Ajouter les tests frontend des réponses 401/403 sur la page candidatures et appeler <code>onUnauthorized</code> pour une session expirée.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="footer">Document généré à partir de l'audit des tests EF-32/EF-33. Aucun code applicatif n'a été modifié.</p>
+    </div>
+  </main>
+</body>
+</html>
