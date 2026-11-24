@@ -75,6 +75,11 @@ Retourne l'utilisateur connecté.
 ### Requête
 
 - Header `Authorization` obligatoire
+- Paramètre facultatif `period` : `P1`, `P2` ou `OTHER`
+- Paramètre facultatif `q` : texte contenu dans le titre, sans distinguer la casse.
+  Les espaces au début et à la fin sont ignorés. Une valeur vide est ignorée.
+  Plusieurs mots sont recherchés comme une expression entière. 100 caractères au maximum.
+  `q` peut être combiné avec `period`.
 - Paramètre facultatif `period` : filtre sur la période (`P1`, `P2` ou `OTHER`).
   Sans ce paramètre, toutes les offres normalement visibles sont retournées.
 
@@ -171,7 +176,8 @@ récente à la plus ancienne, puis de la plus récente à la plus ancienne.
 
 - `401` `UNAUTHENTICATED` : session absente ou invalide.
 - `403` `FORBIDDEN` : contact seulement promoteur ou signataire.
-- `400` `INVALID_QUERY` : `period` est répété ou ne vaut pas `P1`, `P2` ou `OTHER`.
+- `400` `INVALID_QUERY` : `period` est répété ou ne vaut pas `P1`, `P2` ou `OTHER`,
+  ou `q` est répété ou dépasse 100 caractères.
 
 ## GET /applications
 

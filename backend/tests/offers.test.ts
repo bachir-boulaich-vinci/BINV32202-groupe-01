@@ -144,3 +144,51 @@ describe("GET /offers : filtre par période", () => {
     expect(response.body.error.code).toBe("INVALID_QUERY");
   });
 });
+
+describe("GET /offers : recherche par mot-clé", () => {
+  const search = (q: string, kind: UserKind = "ADMIN", id = ADMINISTRATOR.ANNE_LECLERCQ) =>
+    request(app).get("/offers").query({ q }).set("Authorization", tokenFor(kind, id));
+
+  it("cherche l'expression saisie dans le titre sans distinguer la casse", async () => {
+    const response = await search("  aPpLiCaTiOn rEaCt De GeStIoN  ");
+
+    expect(response.status).toBe(200);
+    expect(offerIds(response.body)).toEqual([OFFER.FLEET_APP]);
+  });
+
+  it("recherche plusieurs mots comme une expression entière", async () => {
+    const response = await search("gestion de flotte");
+
+    expect(offerIds(response.body)).toEqual([OFFER.FLEET_APP]);
+  });
+
+  it("ignore une recherche vide", async () => {
+    const response = await search("   ");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(10);
+  });
+
+  it("retourne une liste vide sans correspondance", async () => {
+    const response = await search("stage inexistant");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([]);
+  });
+
+  it("combine la recherche avec la période", async () => {
+    const response = await request(app)
+      .get("/offers")
+      .query({ period: "P2", q: "application" })
+      .set("Authorization", tokenFor("ADMIN", ADMINISTRATOR.ANNE_LECLERCQ));
+
+    expect(offerIds(response.body)).toEqual([OFFER.FLEET_APP, OFFER.CLOUD_MIGRATION]);
+  });
+
+  it("conserve la visibilité publiée lors d'une recherche pour un étudiant", async () => {
+    const response = await search("application", "STUDENT", STUDENT.LUCAS_DUPONT);
+
+    expect(offerIds(response.body)).toEqual([OFFER.FLEET_APP]);
+    expect(response.body.every((offer: { status: string }) => offer.status === "PUBLISHED")).toBe(true);
+  });
+});
